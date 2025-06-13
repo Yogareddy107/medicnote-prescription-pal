@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Plus, 
   Search, 
@@ -14,7 +15,8 @@ import {
   Bell,
   Settings,
   LogOut,
-  Stethoscope
+  Stethoscope,
+  Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const DoctorDashboard = () => {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState([
     {
       id: 1,
@@ -65,34 +68,32 @@ const DoctorDashboard = () => {
   const { toast } = useToast();
 
   const handleCreatePrescription = () => {
-    toast({
-      title: "Navigating to Create Prescription",
-      description: "Redirecting to the prescription creation page.",
-    });
+    navigate("/doctor/prescription/create");
   };
 
   const handleViewPatient = (patientId: number) => {
-    toast({
-      title: "View Patient Details",
-      description: `Viewing details for patient ID: ${patientId}.`,
-    });
+    navigate(`/prescription/${patientId}`);
   };
 
   const handleEditPatient = (patientId: number) => {
-   toast({
+    toast({
       title: "Edit Patient Details",
       description: `Editing details for patient ID: ${patientId}.`,
     });
   };
 
   const handleDeletePatient = (patientId: number) => {
-    // Implement delete logic here
     const updatedPatients = patients.filter((patient) => patient.id !== patientId);
     setPatients(updatedPatients);
     toast({
       title: "Patient Deleted",
       description: `Patient ID: ${patientId} has been successfully deleted.`,
+      variant: "destructive",
     });
+  };
+
+  const handleBackToHome = () => {
+    navigate("/");
   };
 
   return (
@@ -102,9 +103,19 @@ const DoctorDashboard = () => {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="lg:flex lg:items-center lg:justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                Doctor Dashboard
-              </h2>
+              <div className="flex items-center space-x-4">
+                <Button 
+                  variant="outline" 
+                  onClick={handleBackToHome}
+                  className="flex items-center"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Back to Home
+                </Button>
+                <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                  Doctor Dashboard
+                </h2>
+              </div>
             </div>
             <div className="mt-5 flex lg:mt-0 lg:ml-4">
               <Button onClick={handleCreatePrescription} className="bg-blue-600 hover:bg-blue-700">
@@ -208,14 +219,17 @@ const DoctorDashboard = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => handleViewPatient(patient.id)}>
-                              <Eye className="h-4 w-4 mr-2" /> View
+                              <Eye className="h-4 w-4 mr-2" /> View Prescription
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEditPatient(patient.id)}>
-                              <Edit className="h-4 w-4 mr-2" /> Edit
+                              <Edit className="h-4 w-4 mr-2" /> Edit Patient
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleDeletePatient(patient.id)}>
-                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            <DropdownMenuItem 
+                              onClick={() => handleDeletePatient(patient.id)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete Patient
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
   Download, 
@@ -9,7 +9,10 @@ import {
   FileText,
   Pill,
   MessageSquare,
-  Printer
+  Printer,
+  Home,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const PrescriptionDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Mock prescription data
@@ -83,6 +87,29 @@ const PrescriptionDetail = () => {
     });
   };
 
+  const handleEditPrescription = () => {
+    navigate("/doctor/prescription/create");
+    toast({
+      title: "Edit Mode",
+      description: "Redirecting to edit prescription form.",
+    });
+  };
+
+  const handleDeletePrescription = () => {
+    toast({
+      title: "Prescription Deleted",
+      description: "The prescription has been deleted successfully.",
+      variant: "destructive",
+    });
+    setTimeout(() => {
+      navigate("/doctor/dashboard");
+    }, 1500);
+  };
+
+  const handleBackToHome = () => {
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -90,6 +117,14 @@ const PrescriptionDetail = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
+              <Button 
+                variant="outline" 
+                onClick={handleBackToHome}
+                className="flex items-center"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
               <Link to="/doctor/dashboard" className="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
@@ -98,6 +133,18 @@ const PrescriptionDetail = () => {
             </div>
             
             <div className="flex items-center space-x-3">
+              <Button variant="outline" onClick={handleEditPrescription}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleDeletePrescription}
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
               <Button variant="outline" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
                 Print
