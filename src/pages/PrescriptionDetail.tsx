@@ -1,4 +1,3 @@
-
 import { Link, useParams } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -10,7 +9,7 @@ import {
   FileText,
   Pill,
   MessageSquare,
-  Print
+  Printer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,7 +99,7 @@ const PrescriptionDetail = () => {
             
             <div className="flex items-center space-x-3">
               <Button variant="outline" onClick={handlePrint}>
-                <Print className="h-4 w-4 mr-2" />
+                <Printer className="h-4 w-4 mr-2" />
                 Print
               </Button>
               <Button variant="outline" onClick={handleEmailPrescription}>
