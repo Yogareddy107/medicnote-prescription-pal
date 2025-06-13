@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Stethoscope, Users, Shield, FileText, Heart, Clock, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,12 @@ const Index = () => {
               >
                 Contact
               </button>
+              <Link 
+                to="/prescription/1"
+                className="text-gray-600 hover:text-blue-600 transition-colors cursor-pointer"
+              >
+                Sample Prescription
+              </Link>
             </nav>
           </div>
         </div>
