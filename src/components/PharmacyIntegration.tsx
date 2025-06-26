@@ -27,11 +27,7 @@ interface Prescription {
   fulfillment_status: string;
   pharmacy_id?: string;
   fulfillment_notes?: string;
-  patients: {
-    profiles: {
-      full_name: string;
-    };
-  };
+  patient_name: string;
 }
 
 export default function PharmacyIntegration() {
@@ -81,28 +77,41 @@ export default function PharmacyIntegration() {
 
   const fetchPrescriptions = async () => {
     try {
-      let query = supabase
+      // Get prescriptions
+      const { data: prescriptionsData, error: prescriptionsError } = await supabase
         .from('prescriptions')
-        .select(`
-          *,
-          patients (
-            profiles (
-              full_name
-            )
-          )
-        `)
+        .select('*')
         .order('date_issued', { ascending: false });
 
-      // If user is a pharmacist, only show prescriptions assigned to their pharmacy
-      if (userRole === 'pharmacist') {
-        // This would need to be implemented based on your pharmacy-user relationship
-        // For now, we'll show all prescriptions
-      }
+      if (prescriptionsError) throw prescriptionsError;
 
-      const { data, error } = await query;
+      // Get patient names separately
+      const patientIds = [...new Set(prescriptionsData?.map(p => p.patient_id).filter(Boolean))] as string[];
+      
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', patientIds);
 
-      if (error) throw error;
-      setPrescriptions(data || []);
+      if (profilesError) throw profilesError;
+
+      // Combine prescription data with patient names
+      const combinedPrescriptions: Prescription[] = (prescriptionsData || []).map(prescription => {
+        const profile = profilesData?.find(p => p.id === prescription.patient_id);
+        
+        return {
+          id: prescription.id,
+          diagnosis: prescription.diagnosis,
+          medications: prescription.medications,
+          date_issued: prescription.date_issued || '',
+          fulfillment_status: prescription.fulfillment_status || 'pending',
+          pharmacy_id: prescription.pharmacy_id,
+          fulfillment_notes: prescription.fulfillment_notes,
+          patient_name: profile?.full_name || 'Unknown Patient'
+        };
+      });
+
+      setPrescriptions(combinedPrescriptions);
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
     }
@@ -308,12 +317,12 @@ export default function PharmacyIntegration() {
               {prescriptions.map((prescription) => (
                 <TableRow key={prescription.id}>
                   <TableCell>
-                    {prescription.patients?.profiles?.full_name || 'N/A'}
+                    {prescription.patient_name}
                   </TableCell>
                   <TableCell>{prescription.diagnosis}</TableCell>
                   <TableCell>
                     {Array.isArray(prescription.medications) 
-                      ? prescription.medications.map((med: any) => med.name).join(', ')
+                      ? prescription.medications.map((med: any) => med.name || med).join(', ')
                       : 'N/A'
                     }
                   </TableCell>

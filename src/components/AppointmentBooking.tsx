@@ -13,9 +13,7 @@ import { toast } from '@/hooks/use-toast';
 interface Doctor {
   id: string;
   specialization: string;
-  profiles: {
-    full_name: string;
-  };
+  full_name: string;
 }
 
 interface Appointment {
@@ -24,12 +22,8 @@ interface Appointment {
   duration_minutes: number;
   status: string;
   notes?: string;
-  doctors: {
-    specialization: string;
-    profiles: {
-      full_name: string;
-    };
-  };
+  doctor_name: string;
+  doctor_specialization: string;
 }
 
 export default function AppointmentBooking() {
@@ -48,18 +42,33 @@ export default function AppointmentBooking() {
 
   const fetchDoctors = async () => {
     try {
-      const { data, error } = await supabase
+      // Get doctors and their profile info separately
+      const { data: doctorsData, error: doctorsError } = await supabase
         .from('doctors')
-        .select(`
-          id,
-          specialization,
-          profiles (
-            full_name
-          )
-        `);
+        .select('id, specialization');
 
-      if (error) throw error;
-      setDoctors(data || []);
+      if (doctorsError) throw doctorsError;
+
+      // Get profile names for doctors
+      const doctorIds = doctorsData?.map(d => d.id) || [];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', doctorIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine the data
+      const combinedDoctors = doctorsData?.map(doctor => {
+        const profile = profilesData?.find(p => p.id === doctor.id);
+        return {
+          id: doctor.id,
+          specialization: doctor.specialization,
+          full_name: profile?.full_name || 'Unknown Doctor'
+        };
+      }) || [];
+
+      setDoctors(combinedDoctors);
     } catch (error) {
       console.error('Error fetching doctors:', error);
     }
@@ -67,25 +76,51 @@ export default function AppointmentBooking() {
 
   const fetchAppointments = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('appointments')
-        .select(`
-          id,
-          appointment_date,
-          duration_minutes,
-          status,
-          notes,
-          doctors (
-            specialization,
-            profiles (
-              full_name
-            )
-          )
-        `)
+        .select('id, appointment_date, duration_minutes, status, notes, doctor_id')
+        .eq('patient_id', user.id)
         .order('appointment_date', { ascending: true });
 
-      if (error) throw error;
-      setAppointments(data || []);
+      if (appointmentsError) throw appointmentsError;
+
+      // Get doctor details separately
+      const doctorIds = [...new Set(appointmentsData?.map(a => a.doctor_id).filter(Boolean))] as string[];
+      
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from('doctors')
+        .select('id, specialization')
+        .in('id', doctorIds);
+
+      if (doctorsError) throw doctorsError;
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', doctorIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine appointment data with doctor info
+      const combinedAppointments = appointmentsData?.map(appointment => {
+        const doctor = doctorsData?.find(d => d.id === appointment.doctor_id);
+        const profile = profilesData?.find(p => p.id === appointment.doctor_id);
+        
+        return {
+          id: appointment.id,
+          appointment_date: appointment.appointment_date,
+          duration_minutes: appointment.duration_minutes || 30,
+          status: appointment.status || 'scheduled',
+          notes: appointment.notes,
+          doctor_name: profile?.full_name || 'Unknown Doctor',
+          doctor_specialization: doctor?.specialization || 'General Practice'
+        };
+      }) || [];
+
+      setAppointments(combinedAppointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
     }
@@ -213,7 +248,7 @@ export default function AppointmentBooking() {
                     <SelectItem key={doctor.id} value={doctor.id}>
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        <span>{doctor.profiles.full_name} - {doctor.specialization}</span>
+                        <span>{doctor.full_name} - {doctor.specialization}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -288,10 +323,10 @@ export default function AppointmentBooking() {
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium">
-                          Dr. {appointment.doctors.profiles.full_name}
+                          Dr. {appointment.doctor_name}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {appointment.doctors.specialization}
+                          {appointment.doctor_specialization}
                         </p>
                       </div>
                       {getStatusBadge(appointment.status)}

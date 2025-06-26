@@ -35,7 +35,7 @@ export default function NotificationCenter() {
         fetchNotifications();
         
         // Show toast for new notification
-        const newNotification = payload.new as Notification;
+        const newNotification = payload.new as any;
         toast({
           title: newNotification.title,
           description: newNotification.message,
@@ -61,8 +61,20 @@ export default function NotificationCenter() {
 
       if (error) throw error;
       
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      // Type-safe mapping with proper type checking
+      const typedNotifications: Notification[] = (data || []).map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: ['info', 'warning', 'success', 'error'].includes(notification.type || 'info') 
+          ? (notification.type as 'info' | 'warning' | 'success' | 'error') 
+          : 'info',
+        read: notification.read || false,
+        created_at: notification.created_at || ''
+      }));
+      
+      setNotifications(typedNotifications);
+      setUnreadCount(typedNotifications.filter(n => !n.read).length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
