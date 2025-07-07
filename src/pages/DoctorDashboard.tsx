@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -32,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast";
+import FloatingChat from "@/components/FloatingChat";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -242,6 +242,9 @@ const DoctorDashboard = () => {
           </Card>
         </div>
       </main>
+
+      {/* Floating Chat Component for Doctors */}
+      <FloatingChat userRole="doctor" />
     </div>
   );
 };

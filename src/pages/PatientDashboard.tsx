@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -18,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import FloatingChat from "@/components/FloatingChat";
 
 const PatientDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -275,6 +275,9 @@ const PatientDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Chat Component for Patients */}
+      <FloatingChat userRole="patient" />
     </div>
   );
 };
